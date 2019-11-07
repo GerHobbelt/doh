@@ -709,6 +709,44 @@ static int initprobe(int dnstype, char *host, const char *url, CURLM *multi,
   (void)select(0, NULL, NULL, NULL, &wait);
 #endif
 
+struct feat {
+	const char* name;
+	int bitmask;
+};
+
+static const struct feat feats[] = {
+  {"AsynchDNS",      CURL_VERSION_ASYNCHDNS},
+  {"Debug",          CURL_VERSION_DEBUG},
+  {"TrackMemory",    CURL_VERSION_CURLDEBUG},
+  {"IDN",            CURL_VERSION_IDN},
+  {"IPv6",           CURL_VERSION_IPV6},
+  {"Largefile",      CURL_VERSION_LARGEFILE},
+  {"SSPI",           CURL_VERSION_SSPI},
+  {"GSS-API",        CURL_VERSION_GSSAPI},
+  {"Kerberos",       CURL_VERSION_KERBEROS5},
+  {"SPNEGO",         CURL_VERSION_SPNEGO},
+  {"NTLM",           CURL_VERSION_NTLM},
+  {"NTLM_WB",        CURL_VERSION_NTLM_WB},
+  {"SSL",            CURL_VERSION_SSL},
+  {"libz",           CURL_VERSION_LIBZ},
+  {"brotli",         CURL_VERSION_BROTLI},
+  {"CharConv",       CURL_VERSION_CONV},
+  {"TLS-SRP",        CURL_VERSION_TLSAUTH_SRP},
+  {"HTTP2",          CURL_VERSION_HTTP2},
+  {"HTTP3",          CURL_VERSION_HTTP3},
+  {"UnixSockets",    CURL_VERSION_UNIX_SOCKETS},
+  {"HTTPS-proxy",    CURL_VERSION_HTTPS_PROXY},
+  {"MultiSSL",       CURL_VERSION_MULTI_SSL},
+  {"PSL",            CURL_VERSION_PSL},
+  {"alt-svc",        CURL_VERSION_ALTSVC},
+};
+
+static int
+featcomp(const void* p1, const void* p2)
+{
+	return _strcmpi(*(char* const*)p1, *(char* const*)p2);
+}
+
 static void help(const char *msg)
 {
   if(msg != NULL)
@@ -725,6 +763,35 @@ static void help(const char *msg)
         "  -V  show version\n"
         "(default URL is %s)\n",
         default_url);
+  curl_version_info_data *curlinfo = curl_version_info(CURLVERSION_NOW);
+  if (curlinfo)
+  {
+	  fprintf(stderr, "\n");
+	  fprintf(stderr, "curl %s %s\n", LIBCURL_VERSION, curl_version());
+	  fprintf(stderr, "Release-Date: %s\n", LIBCURL_TIMESTAMP);
+	  if (curlinfo->protocols) {
+		  const char* const* proto;
+		  printf("Protocols: ");
+		  for (proto = curlinfo->protocols; *proto; ++proto) {
+			  printf("%s ", *proto);
+		  }
+		  puts(""); /* newline */
+	  }
+	  if (curlinfo->features) {
+		  char* featp[sizeof(feats) / sizeof(feats[0]) + 1];
+		  size_t numfeat = 0;
+		  unsigned int i;
+		  printf("Features:");
+		  for (i = 0; i < sizeof(feats) / sizeof(feats[0]); i++) {
+			  if (curlinfo->features & feats[i].bitmask)
+				  featp[numfeat++] = (char*)feats[i].name;
+		  }
+		  qsort(&featp[0], numfeat, sizeof(char*), featcomp);
+		  for (i = 0; i < numfeat; i++)
+			  printf(" %s", featp[i]);
+		  puts(""); /* newline */
+	  }
+  }
   exit(1);
 }
 
