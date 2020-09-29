@@ -90,7 +90,7 @@ struct data {
   char trace_ascii; /* 1 or 0 */
 };
 
-const char default_url[] = "https://dns.cloudflare.com/dns-query";
+const char default_url[] = "https://dns.pub/dns-query";
 
 static
 void dump(const char *text,
