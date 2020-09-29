@@ -1,0 +1,33 @@
+name: Build DoH Cli
+
+on: [push]
+
+jobs:
+  build:
+    runs-on: macos-latest
+    
+    steps:
+    - uses: actions/checkout@v1
+    - name: make
+      run: |
+        echo "::set-env name=FILE_DATE::_$(date +"%Y%m%d")"
+        make
+  
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: release_mac${{ env.FILE_DATE }}
+        release_name: Release_Mac${{ env.FILE_DATE }}
+        draft: false
+        prerelease: false
+   
+    - name: Upload release asset
+      uses: svenstaro/upload-release-action@v2
+      with:
+        repo_token: ${{ secrets.GITHUB_TOKEN }}
+        file: doh
+        tag: release_mac${{ env.FILE_DATE }}
+        file_glob: true
